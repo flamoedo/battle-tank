@@ -19,9 +19,11 @@
   <script>
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
-    const socket = io('http://localhost:3000');
+    //const socket = io('http://localhost:3000');
 	
-	//const socket = io(window.location.hostname + ':3000');
+	//const socket = io('https://battle-tank.onrender.com' + ':3000');
+
+	const socket = io(window.location.hostname + ':3000');
 
 
     const tankSize = 30;
