@@ -11,6 +11,8 @@ const io = socketIO(server, {
   }
 });
 
+const port = process.env.PORT || 4000;
+
 // Estado inicial dos tanques
 let tanks = {};
 
@@ -90,6 +92,6 @@ io.on('connection', (socket) => {
   });
 });
 
-server.listen(3000, () => {
-  console.log('Servidor rodando na porta 3000');
-});
+app.listen(port, () => {
+  console.log(`Servidor rodando na porta ${port}`)
+})
