@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tank Battle</title>
+  <style>
+    canvas {
+      background-color: #333;
+      display: block;
+      margin: 0 auto;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="gameCanvas" width="800" height="600"></canvas>
+  <script src="https://cdn.socket.io/4.0.0/socket.io.js"></script>
+
+  <script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const socket = io('http://localhost:3000');
+	
+	//const socket = io(window.location.hostname + ':3000');
+
+
+    const tankSize = 30;
+    let tanks = {};
+    let myTank = null;
+    let bullets = [];
+    
+    // Movimento do tanque
+    let keys = {};
+    let speed = 0; // Velocidade atual do tanque
+    const maxSpeed = 5; // Velocidade máxima
+    const acceleration = 0.1; // Taxa de aceleração
+    const deceleration = 0.05; // Taxa de desaceleração
+
+    // Cooldown para balas
+    let canShoot = true;
+    const shootCooldown = 200; // 1 segundo
+
+    window.addEventListener('keydown', (e) => keys[e.key] = true);
+    window.addEventListener('keyup', (e) => keys[e.key] = false);
+	
+	
+    socket.on('initialize', (data) => {
+      tanks = data.tanks;
+      myTank = tanks[socket.id];
+    });
+/*
+    socket.on('newPlayer', (data) => {
+      tanks[data.id] = data.tank;
+    });
+*/
+    socket.on('tankMoved', (data) => {
+      tanks[data.id] = data.tank;
+    });
+
+    socket.on('bulletFired', (data) => {
+      bullets.push(data.bullet);
+    });
+
+/*
+    socket.on('hit', (data) => {
+      if (tanks[data.id]) {
+        tanks[data.id].hits = tanks[data.id].hits || 0; // Inicializa hits se não existir
+        tanks[data.id].hits++;
+		console.log('Fui atingido!');
+
+
+        // Se o tanque receber mais de 3 hits, é destruído
+        if (tanks[data.id].hits > 3) {
+          socket.emit('destroy', data.id);
+        }
+
+      }
+    }
+	
+	);
+*/
+/*
+    socket.on('damaged', (data) => {
+      if (tanks[data.id]) {
+        tanks[data.id].health = data.health;
+      }
+    });
+*/
+	socket.on('playerDisconnected', (data) => {
+		  delete tanks[data.id];
+		});
+
+    socket.on('destroyed', (data) => {
+      delete tanks[data.id];
+    });
+
+	function checkForStart() {
+		if (keys['s']) {
+			socket.emit('start');
+		}
+	}
+
+    function moveTank() {
+      if (!myTank) return;
+
+      // Acelera e desacelera
+      if (keys['ArrowUp']) {
+        speed = Math.min(speed + acceleration, maxSpeed);
+      } else if (keys['ArrowDown']) {
+        speed = Math.max(speed - deceleration, -maxSpeed);
+      } else {
+        speed *= 0.9; // desacelera gradualmente
+      }
+	  
+      // Atualiza a posição do tanque
+      myTank.x += Math.cos(myTank.angle * Math.PI / 180) * speed;
+      myTank.y += Math.sin(myTank.angle * Math.PI / 180) * speed;
+
+      // Rotação do tanque
+      if (keys['ArrowLeft']) myTank.angle -= 2;
+      if (keys['ArrowRight']) myTank.angle += 2;
+
+      socket.emit('move', myTank);
+    }
+
+
+		function shootBullet() {
+		  if (keys[' '] && canShoot) {
+			const offset = tankSize + 10; // Define um deslocamento adicional
+
+			const bullet = {
+			  x: myTank.x + Math.cos(myTank.angle * Math.PI / 180) * offset,
+			  y: myTank.y + Math.sin(myTank.angle * Math.PI / 180) * offset,
+			  angle: myTank.angle,
+			  id: socket.id // Adiciona o id do tanque que atirou
+			};
+
+			//bullets.push(bullet);	
+			socket.emit('shoot', bullet);
+
+			// Inicia cooldown
+			canShoot = false;
+			setTimeout(() => {
+			  canShoot = true;
+			}, shootCooldown);
+		  }
+		}
+
+
+
+   function updateBullets() {
+	  bullets = bullets.map(bullet => {
+		bullet.x += Math.cos(bullet.angle * Math.PI / 180) * 5;
+		bullet.y += Math.sin(bullet.angle * Math.PI / 180) * 5;
+		return bullet;
+	  });
+
+	  bullets.forEach((bullet, index) => {
+		for (let id in tanks) {
+		  const tank = tanks[id];
+		  
+		  if (isCollision(bullet, tank)) {
+			if (id !== myTank.id) { // Verifica se o tanque atingido não é o tanque que disparou
+			  socket.emit('hit', id);
+			}
+			
+			bullets.splice(index, 1);
+			break; // Evita verificar colisão com múltiplos tanques
+		  }
+		}
+	  });
+	}
+
+
+    function isCollision(bullet, tank) {
+      return bullet.x > tank.x - tankSize && bullet.x < tank.x + tankSize &&
+             bullet.y > tank.y - tankSize && bullet.y < tank.y + tankSize;
+    }
+
+    function drawTanks() {
+      for (let id in tanks) {
+        const tank = tanks[id];
+        ctx.save();
+        ctx.translate(tank.x, tank.y);
+        ctx.rotate(tank.angle * Math.PI / 180);
+
+        // Corpo do tanque
+        ctx.fillStyle = tank.color;
+        ctx.fillRect(-tankSize / 2, -tankSize / 2, tankSize, tankSize);
+
+        // Canhão
+        ctx.fillStyle = 'gray';
+        ctx.fillRect(0, -5, tankSize, 10);
+
+        ctx.restore();
+		
+		// Exibir o valor de saúde acima do tanque
+		ctx.fillStyle = 'white';
+		ctx.font = '16px Arial';
+		ctx.textAlign = 'center';
+		ctx.fillText(`HP: ${tank.health || 100}`, tank.x, tank.y - tankSize); // Exibe HP acima do tanque
+  
+		
+      }
+    }
+
+    function drawBullets() {
+      bullets.forEach(bullet => {
+        ctx.fillStyle = 'yellow';
+        ctx.beginPath();
+        ctx.arc(bullet.x, bullet.y, 5, 0, Math.PI * 2);
+        ctx.fill();
+      });
+    }
+
+    function gameLoop() {
+	  checkForStart();
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      moveTank();
+      shootBullet();
+      updateBullets();
+      drawTanks();
+      drawBullets();
+      requestAnimationFrame(gameLoop);
+    }
+
+    gameLoop();
+  </script>
+</body>
+</html>
