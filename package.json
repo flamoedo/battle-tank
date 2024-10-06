@@ -1,5 +1,5 @@
 {
-  "name": "nome-do-seu-projeto",
+  "name": "battle-tank",
   "version": "1.0.0",
   "main": "server.js",
   "scripts": {
