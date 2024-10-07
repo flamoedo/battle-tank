@@ -21,8 +21,8 @@
     const ctx = canvas.getContext('2d');
     //const socket = io('http://localhost:3000');
 	
-	//const socket = io('https://battle-tank.onrender.com' + ':3000');
-/*
+	const socket = io('https://battle-tank.onrender.com');
+
 	function getPortParameter() {
 		const params = new URLSearchParams(window.location.search);
 		return params.get('port') || 10000; // Porta padrão se não for fornecida
@@ -30,10 +30,9 @@
 
 	const PORT = getPortParameter();
 
-	const socket = io(window.location.hostname + ':' + PORT);
-*/
+	//const socket = io(window.location.hostname + ':' + PORT);
 
-    const socket = io(window.location.hostname);	  
+	
 
     const tankSize = 30;
     let tanks = {};
@@ -65,7 +64,9 @@
     });
 */
     socket.on('tankMoved', (data) => {
-      tanks[data.id] = data.tank;
+      if (data.id !== myTank.id){
+	  tanks[data.id] = data.tank;
+	  }
     });
 
     socket.on('bulletFired', (data) => {
@@ -90,13 +91,13 @@
 	
 	);
 */
-/*
+
     socket.on('damaged', (data) => {
       if (tanks[data.id]) {
         tanks[data.id].health = data.health;
       }
     });
-*/
+
 	socket.on('playerDisconnected', (data) => {
 		  delete tanks[data.id];
 		});
