@@ -9,8 +9,7 @@ Jogue Battle Tank diretamente no navegador:
 
 Ou do Celular:
 
-![QR Code](images/qrcode_battle-tank.onrender.com.png)
-
+<img src="images/qrcode_battle-tank.onrender.com.png" alt="QR Code" width="150" />
 
 ## Como Jogar
 
