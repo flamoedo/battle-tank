@@ -10,10 +10,11 @@ Jogue Battle Tank diretamente no navegador:
 ## Como Jogar
 
 ### Controles
+- **Iniciar**: Tecla `S`
 - **Acelerar**: Seta para cima
 - **Frear**: Seta para baixo
 - **Virar**: Setas para esquerda e direita
-- **Atirar**: Tecla `S`
+- **Atirar**: Tecla espaço
 
 ### Objetivo
 - Controle seu tanque para vencer o adversário. Use o terreno a seu favor, planeje seus movimentos e seja o último tanque em pé!
