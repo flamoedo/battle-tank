@@ -58,13 +58,13 @@
 
 	let socket;
 /*
-	if(LOCAL){
+	if(LOCAL){*/
 		socket = io(window.location.hostname + ':' + PORT);
-	
+	/*
 	}
 	else
 	{*/
-		socket = io(window.location.hostname);
+		//socket = io(window.location.hostname);
 
 	//}
 
@@ -113,24 +113,6 @@
       bullets.push(data.bullet);
     });
 
-/*
-    socket.on('hit', (data) => {
-      if (tanks[data.id]) {
-        tanks[data.id].hits = tanks[data.id].hits || 0; // Inicializa hits se não existir
-        tanks[data.id].hits++;
-		console.log('Fui atingido!');
-
-
-        // Se o tanque receber mais de 3 hits, é destruído
-        if (tanks[data.id].hits > 3) {
-          socket.emit('destroy', data.id);
-        }
-
-      }
-    }
-	
-	);
-*/
 
     socket.on('damaged', (data) => {
       if (tanks[data.id]) {
@@ -143,7 +125,7 @@
 		});
 
     socket.on('destroyed', (data) => {
-      delete tanks[data.id];
+      delete tanks[data.id];	  
     });
 
 	function checkForStart() {
@@ -151,30 +133,7 @@
 			socket.emit('start');
 		}
 	}
-/*
-    function moveTank() {
-      if (!myTank) return;
 
-      // Acelera e desacelera
-      if (keys['ArrowUp']) {
-        speed = Math.min(speed + acceleration, maxSpeed);
-      } else if (keys['ArrowDown']) {
-        speed = Math.max(speed - deceleration, -maxSpeed);
-      } else {
-        speed *= 0.9; // desacelera gradualmente
-      }
-	  
-      // Atualiza a posição do tanque
-      myTank.x += Math.cos(myTank.angle * Math.PI / 180) * speed;
-      myTank.y += Math.sin(myTank.angle * Math.PI / 180) * speed;
-
-      // Rotação do tanque
-      if (keys['ArrowLeft']) myTank.angle -= 2;
-      if (keys['ArrowRight']) myTank.angle += 2;
-
-      socket.emit('move', myTank);
-    }
-*/
 
 function moveTank() {
   if (!myTank) return;
@@ -225,6 +184,11 @@ function moveTank() {
 
 
 		function shoot(){
+			
+			if (tanks[socket.id] == null){
+				return;
+			}
+			
 			if (canShoot) {
 					const offset = tankSize + 10; // Define um deslocamento adicional
 
