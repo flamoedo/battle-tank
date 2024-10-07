@@ -46,12 +46,28 @@
 		const params = new URLSearchParams(window.location.search);
 		return params.get('port') || 10000; // Porta padrão se não for fornecida
 	}
+	
+	function getLocalParameter() {
+		const params = new URLSearchParams(window.location.search);
+		return ('true' == params.get('local')); // Porta padrão se não for fornecida
+	}
 
 	const PORT = getPortParameter();
+	
+	const LOCAL = getLocalParameter();
 
-	//const socket = io(window.location.hostname + ':' + PORT);
-	  
-	const socket = io(window.location.hostname);
+	let socket;
+/*
+	if(LOCAL){
+		socket = io(window.location.hostname + ':' + PORT);
+	
+	}
+	else
+	{*/
+		socket = io(window.location.hostname);
+
+	//}
+
 	
 
     const tankSize = 30;
@@ -73,6 +89,10 @@
     window.addEventListener('keydown', (e) => keys[e.key] = true);
     window.addEventListener('keyup', (e) => keys[e.key] = false);
 	
+	document.addEventListener('DOMContentLoaded', () => {
+		socket.emit('start');
+	});
+
 	
     socket.on('initialize', (data) => {
       tanks = data.tanks;
@@ -304,20 +324,25 @@ function moveTank() {
     const startButton = document.getElementById('startButton');
 
 // Evento para o botão de "Iniciar"
-    startButton.addEventListener('click', () => {
-      socket.emit('start');
+    startButton.addEventListener('touchstart', (e) => {
+    e.preventDefault(); // Evita o comportamento padrão
+     socket.emit('start');
     });
 
 let joystickActive = false;
 let joystickPos = { x: 0, y: 0 };
 
 joystickArea.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+
   joystickActive = true;
   joystickPos = getJoystickPos(e);
   handleTankMovement();
 });
 
 joystickArea.addEventListener('touchmove', (e) => {
+    e.preventDefault();
+
   if (joystickActive) {
     joystickPos = getJoystickPos(e);
     handleTankMovement();
@@ -380,11 +405,10 @@ function handleTankMovement() {
 }
 
 // Lida com o botão de tiro
-shootButton.addEventListener('touchstart', () => {
-  //if (canShoot) {
-    shoot();
-  //}
-});
+	shootButton.addEventListener('touchstart', (e) => {
+		e.preventDefault(); // Evita o comportamento padrão
+		shoot();  
+	});
 
 
     function gameLoop() {
