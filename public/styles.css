@@ -123,3 +123,12 @@ canvas {
 .down { grid-row: 3 / 4; grid-column: 2 / 3; }
 .left { grid-row: 2 / 3; grid-column: 1 / 2; }
 .right { grid-row: 2 / 3; grid-column: 3 / 4; }
+
+/* Adicione isto no seu CSS para o botão de tiro e o joystick */
+#shootButton, #joystick #joystickArea{
+  touch-action: none;
+}
+
+button {
+    touch-action: manipulation; /* Remove o atraso para toques */
+}
