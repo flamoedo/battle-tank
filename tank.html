@@ -38,7 +38,7 @@
   <script>
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
-    const socket = io('http://localhost:3000');
+    //const socket = io('http://localhost:3000');
 	
 	//const socket = io('https://battle-tank.onrender.com');
 
@@ -50,7 +50,8 @@
 	const PORT = getPortParameter();
 
 	//const socket = io(window.location.hostname + ':' + PORT);
-
+	  
+	const socket = io(window.location.hostname);
 	
 
     const tankSize = 30;
