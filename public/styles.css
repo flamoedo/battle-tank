@@ -129,6 +129,9 @@ canvas {
   touch-action: none;
 }
 
+/* Remove o atraso para toques */
+/*
 button {
-    touch-action: manipulation; /* Remove o atraso para toques */
+    touch-action: manipulation; 
 }
+*/
