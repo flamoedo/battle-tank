@@ -98,9 +98,21 @@ io.on('connection', (socket) => {
   });
 });
 
-
+/*
 // Serve o arquivo tank.html quando a raiz é acessada
 app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'tank.html'));
+});
+*/
+app.get('/', (req, res) => {
+    const lport = req.query.port || port; // Usa o parâmetro GET ou a porta global
+
+    // Redireciona para a mesma URL com o parâmetro 'port'
+    if (!req.query.port) {
+        return res.redirect(`/?port=${port}`);
+    }
+
+    // Serve o arquivo HTML
     res.sendFile(path.join(__dirname, 'tank.html'));
 });
 

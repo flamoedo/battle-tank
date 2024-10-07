@@ -23,7 +23,14 @@
 	
 	//const socket = io('https://battle-tank.onrender.com' + ':3000');
 
-	const socket = io(window.location.hostname + ':3000');
+	function getPortParameter() {
+		const params = new URLSearchParams(window.location.search);
+		return params.get('port') || 10000; // Porta padrão se não for fornecida
+	}
+
+	const PORT = getPortParameter();
+
+	const socket = io(window.location.hostname + ':' + PORT);
 
 
     const tankSize = 30;
