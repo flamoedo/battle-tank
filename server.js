@@ -104,6 +104,10 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'tank.html'));
 });
 */
+
+// Serve arquivos estáticos da pasta "public"
+app.use(express.static(path.join(__dirname, 'public')));
+
 app.get('/', (req, res) => {
     const lport = req.query.port || port; // Usa o parâmetro GET ou a porta global
 

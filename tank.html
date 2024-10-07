@@ -4,24 +4,43 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Tank Battle</title>
-  <style>
+  <!--<style>
     canvas {
       background-color: #333;
       display: block;
       margin: 0 auto;
     }
-  </style>
+  </style>-->
+  <link rel="stylesheet" href="styles.css">
+
 </head>
 <body>
-  <canvas id="gameCanvas" width="800" height="600"></canvas>
+
+<div id="joystickArea">
+  <div id="joystick">
+  <div class="joystick-button up">↑</div>
+    <div class="joystick-button left">←</div>
+    <div class="joystick-button down">↓</div>
+    <div class="joystick-button right">→</div>
+  
+  </div>
+</div>
+<div id="shootButtonArea">
+   <button id="startButton">Start</button>
+  <button id="shootButton">Shoot</button>
+</div>
+
+  <!--<canvas id="gameCanvas"></canvas>-->
+
+  <canvas id="gameCanvas" width="600" height="800"></canvas>
   <script src="https://cdn.socket.io/4.0.0/socket.io.js"></script>
 
   <script>
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
-    //const socket = io('http://localhost:3000');
+    const socket = io('http://localhost:3000');
 	
-	const socket = io('https://battle-tank.onrender.com');
+	//const socket = io('https://battle-tank.onrender.com');
 
 	function getPortParameter() {
 		const params = new URLSearchParams(window.location.search);
@@ -42,8 +61,8 @@
     // Movimento do tanque
     let keys = {};
     let speed = 0; // Velocidade atual do tanque
-    const maxSpeed = 5; // Velocidade máxima
-    const acceleration = 0.1; // Taxa de aceleração
+    const maxSpeed = 1; // Velocidade máxima
+    const acceleration = 0.05; // Taxa de aceleração
     const deceleration = 0.05; // Taxa de desaceleração
 
     // Cooldown para balas
@@ -111,7 +130,7 @@
 			socket.emit('start');
 		}
 	}
-
+/*
     function moveTank() {
       if (!myTank) return;
 
@@ -134,28 +153,82 @@
 
       socket.emit('move', myTank);
     }
+*/
 
+function moveTank() {
+  if (!myTank) return;
+
+  // Acelera e desacelera
+  if (keys['ArrowUp']) {
+    speed = Math.min(speed + acceleration, maxSpeed);
+  } else if (keys['ArrowDown']) {
+    speed = Math.max(speed - deceleration, -maxSpeed);
+  } else {
+    speed *= 0.9; // desacelera gradualmente
+  }
+
+  // Calcula a nova posição do tanque
+  const newX = myTank.x + Math.cos(myTank.angle * Math.PI / 180) * speed;
+  const newY = myTank.y + Math.sin(myTank.angle * Math.PI / 180) * speed;
+
+  // Limites do canvas
+  const tankHalfSize = tankSize / 2;
+  const canvasWidth = canvas.width;
+  const canvasHeight = canvas.height;
+
+  // Verifica limites do lado esquerdo e direito
+  if (newX - tankHalfSize < 0) {
+    myTank.x = tankHalfSize; // Manter dentro do limite
+  } else if (newX + tankHalfSize > canvasWidth) {
+    myTank.x = canvasWidth - tankHalfSize; // Manter dentro do limite
+  } else {
+    myTank.x = newX; // Atualiza a posição se estiver dentro dos limites
+  }
+
+  // Verifica limites do topo e da parte inferior
+  if (newY - tankHalfSize < 0) {
+    myTank.y = tankHalfSize; // Manter dentro do limite
+  } else if (newY + tankHalfSize > canvasHeight) {
+    myTank.y = canvasHeight - tankHalfSize; // Manter dentro do limite
+  } else {
+    myTank.y = newY; // Atualiza a posição se estiver dentro dos limites
+  }
+
+  // Rotação do tanque
+  if (keys['ArrowLeft']) myTank.angle -= 2;
+  if (keys['ArrowRight']) myTank.angle += 2;
+
+  // Envia a nova posição do tanque para o servidor
+  socket.emit('move', myTank);
+}
+
+
+		function shoot(){
+			if (canShoot) {
+					const offset = tankSize + 10; // Define um deslocamento adicional
+
+					const bullet = {
+					  x: myTank.x + Math.cos(myTank.angle * Math.PI / 180) * offset,
+					  y: myTank.y + Math.sin(myTank.angle * Math.PI / 180) * offset,
+					  angle: myTank.angle,
+					  id: socket.id // Adiciona o id do tanque que atirou
+					};
+
+					//bullets.push(bullet);	
+					socket.emit('shoot', bullet);
+
+					// Inicia cooldown
+					canShoot = false;
+					setTimeout(() => {
+					  canShoot = true;
+					}, shootCooldown);
+				  }
+		}
 
 		function shootBullet() {
-		  if (keys[' '] && canShoot) {
-			const offset = tankSize + 10; // Define um deslocamento adicional
-
-			const bullet = {
-			  x: myTank.x + Math.cos(myTank.angle * Math.PI / 180) * offset,
-			  y: myTank.y + Math.sin(myTank.angle * Math.PI / 180) * offset,
-			  angle: myTank.angle,
-			  id: socket.id // Adiciona o id do tanque que atirou
-			};
-
-			//bullets.push(bullet);	
-			socket.emit('shoot', bullet);
-
-			// Inicia cooldown
-			canShoot = false;
-			setTimeout(() => {
-			  canShoot = true;
-			}, shootCooldown);
-		  }
+		  if (keys[' ']) {
+			shoot();
+			}
 		}
 
 
@@ -224,6 +297,94 @@
         ctx.fill();
       });
     }
+	
+	const joystickArea = document.getElementById('joystickArea');
+	const shootButton = document.getElementById('shootButton');
+    const startButton = document.getElementById('startButton');
+
+// Evento para o botão de "Iniciar"
+    startButton.addEventListener('click', () => {
+      socket.emit('start');
+    });
+
+let joystickActive = false;
+let joystickPos = { x: 0, y: 0 };
+
+joystickArea.addEventListener('touchstart', (e) => {
+  joystickActive = true;
+  joystickPos = getJoystickPos(e);
+  handleTankMovement();
+});
+
+joystickArea.addEventListener('touchmove', (e) => {
+  if (joystickActive) {
+    joystickPos = getJoystickPos(e);
+    handleTankMovement();
+  }
+});
+
+joystickArea.addEventListener('touchend', () => {
+  joystickActive = false;
+  speed = 0; // Parar o movimento quando o toque é removido
+});
+
+// Função para obter a posição do toque relativo ao centro do joystick
+function getJoystickPos(e) {
+  const rect = joystickArea.getBoundingClientRect();
+  const touch = e.touches[0];
+  return {
+    x: touch.clientX - rect.left - rect.width / 2,
+    y: touch.clientY - rect.top - rect.height / 2
+  };
+}
+
+// Função para controlar o movimento do tanque
+function handleTankMovement() {
+  const angle = Math.atan2(joystickPos.y, joystickPos.x);
+  const distance = Math.min(Math.sqrt(joystickPos.x * joystickPos.x + joystickPos.y * joystickPos.y), 40);
+
+  speed = (distance / 40) * maxSpeed; // Mapear distância para velocidade
+
+  // Define o ângulo de acordo com o joystick
+  myTank.angle = angle * 180 / Math.PI;
+  
+  // Calcula a nova posição do tanque
+  const newX = myTank.x + Math.cos(myTank.angle * Math.PI / 180) * speed;
+  const newY = myTank.y + Math.sin(myTank.angle * Math.PI / 180) * speed;
+
+  // Limites do canvas
+  const tankHalfSize = tankSize / 2;
+  const canvasWidth = canvas.width;
+  const canvasHeight = canvas.height;
+
+  // Verifica limites do lado esquerdo e direito
+  if (newX - tankHalfSize < 0) {
+    myTank.x = tankHalfSize; // Manter dentro do limite
+  } else if (newX + tankHalfSize > canvasWidth) {
+    myTank.x = canvasWidth - tankHalfSize; // Manter dentro do limite
+  } else {
+    myTank.x = newX; // Atualiza a posição se estiver dentro dos limites
+  }
+
+  // Verifica limites do topo e da parte inferior
+  if (newY - tankHalfSize < 0) {
+    myTank.y = tankHalfSize; // Manter dentro do limite
+  } else if (newY + tankHalfSize > canvasHeight) {
+    myTank.y = canvasHeight - tankHalfSize; // Manter dentro do limite
+  } else {
+    myTank.y = newY; // Atualiza a posição se estiver dentro dos limites
+  }
+  
+  socket.emit('move', myTank);
+}
+
+// Lida com o botão de tiro
+shootButton.addEventListener('touchstart', () => {
+  //if (canShoot) {
+    shoot();
+  //}
+});
+
 
     function gameLoop() {
 	  checkForStart();
